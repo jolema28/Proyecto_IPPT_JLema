@@ -1,9 +1,18 @@
 package principal;
 
 public class Usuario {
-        private String nombre;
-        private String email;
-        private String contrasena;
-        private int edad;
-        private boolean activo;
-    }
+
+        public String nombre;
+        public String email;
+        public String contrasena;
+        public int edad;
+        public boolean activo;
+
+        public Usuario(String nombre, String email, String contrasena, int edad) {
+                this.nombre = nombre;
+                this.email = email;
+                this.contrasena = contrasena;
+                this.edad = edad;
+                this.activo = true;
+        }
+}
