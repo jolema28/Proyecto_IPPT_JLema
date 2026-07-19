@@ -118,6 +118,66 @@ Cambios realizados:
 - Se agregó listado de todos los usuarios.
 - Se amplió el menú principal.
 
+## Versión final
+
+Esta versión completa el sistema de gestión de usuarios desarrollado durante el curso.
+
+### Funcionalidades disponibles
+
+- Iniciar sesión.
+- Registrar un usuario administrador.
+- Dar de alta usuarios Tester después de iniciar sesión.
+- Listar todos los usuarios.
+- Buscar un usuario por email.
+- Reiniciar la contraseña de un usuario.
+- Ver el perfil del usuario que inició sesión.
+- Cerrar sesión.
+- Salir del sistema.
+
+### Validaciones y manejo de errores
+
+- Los campos obligatorios no pueden quedar vacíos.
+- El email debe tener un formato válido.
+- No se permiten usuarios con emails duplicados.
+- La contraseña debe tener como mínimo 6 caracteres.
+- Se controlan las opciones inexistentes y los valores no numéricos del menú.
+- Los errores se informan en pantalla y el programa permite continuar usando el sistema.
+- Se utilizan las excepciones personalizadas `DatosInvalidosException`,
+  `EmailDuplicadoException` y `UsuarioNoEncontradoException`.
+
+### Mejora de diseño
+
+La clase `SistemaUsuarios` aplica el patrón Singleton. De esta forma existe una única
+instancia del sistema y una sola colección de usuarios durante la ejecución del programa.
+La clase `ValidadorDatos` concentra las validaciones para separar esa responsabilidad de
+la gestión de usuarios.
+
+## Cómo ejecutar el proyecto
+
+Requisitos:
+
+- IntelliJ IDEA.
+- Java JDK 17 (Temurin 17 recomendado).
+
+Pasos para ejecutar desde IntelliJ IDEA:
+
+1. Abrir la carpeta del proyecto.
+2. Esperar a que IntelliJ cargue la configuración del proyecto.
+3. Verificar en **File > Project Structure > Project** que el SDK sea Temurin 17.
+4. Abrir la clase `src/principal/Main.java`.
+5. Hacer clic en el icono verde ubicado junto al método `main`.
+6. Seleccionar **Run 'Main.main()'**.
+
+El proyecto ya incluye la configuración de IntelliJ y reconoce la carpeta `src` como
+carpeta de código fuente.
+
+Usuarios de prueba incluidos:
+
+- Administrador: `admin@mail.com` / `admin123`.
+- Tester: `tester@mail.com` / `tester123`.
+
+Los Testers creados desde el menú reciben la contraseña inicial `Tester123`.
+
 ## Diagrama de clases UML
 
 ```mermaid
@@ -165,19 +225,38 @@ classDiagram
     }
 
     class SistemaUsuarios {
+        -SistemaUsuarios instancia$
         -ArrayList~Usuario~ usuarios
-        +SistemaUsuarios()
+        -SistemaUsuarios()
+        +getInstancia() SistemaUsuarios$
         +cargarUsuariosPrueba() void
         +existeUsuario(String email) boolean
-        +registrarUsuario(Usuario usuario) boolean
+        +registrarUsuario(Usuario usuario) void
         +validarCredenciales(String email, String contrasena) Usuario
         +login(String email, String contrasena) Usuario
-        +reiniciarContrasena(String email, String nuevaContrasena) boolean
+        +reiniciarContrasena(String email, String nuevaContrasena) void
         +buscarUsuario(String email) Usuario
         +listarUsuarios() void
     }
 
+    class ValidadorDatos {
+        +LONGITUD_MINIMA_CONTRASENA int$
+        -ValidadorDatos()
+        +validarUsuario(Usuario usuario) void$
+        +validarCampoObligatorio(String valor, String nombreCampo) void$
+        +validarEmail(String email) void$
+        +validarContrasena(String contrasena) void$
+    }
+
+    class DatosInvalidosException
+    class EmailDuplicadoException
+    class UsuarioNoEncontradoException
+
     Usuario <|-- Admin
     Usuario <|-- Tester
     SistemaUsuarios --> Usuario
+    SistemaUsuarios ..> ValidadorDatos
+    ValidadorDatos ..> DatosInvalidosException
+    SistemaUsuarios ..> EmailDuplicadoException
+    SistemaUsuarios ..> UsuarioNoEncontradoException
 ```

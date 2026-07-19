@@ -1,24 +1,36 @@
 package principal;
 
 import java.util.ArrayList;
+import principal.excepciones.DatosInvalidosException;
+import principal.excepciones.EmailDuplicadoException;
+import principal.excepciones.UsuarioNoEncontradoException;
 
 public class SistemaUsuarios {
 
-    private ArrayList<Usuario> usuarios;
+    private static SistemaUsuarios instancia;
+    private final ArrayList<Usuario> usuarios;
 
-    public SistemaUsuarios() {
+    private SistemaUsuarios() {
         usuarios = new ArrayList<Usuario>();
         cargarUsuariosPrueba();
     }
 
+    public static SistemaUsuarios getInstancia() {
+        if (instancia == null) {
+            instancia = new SistemaUsuarios();
+        }
+
+        return instancia;
+    }
+
     public void cargarUsuariosPrueba() {
-        usuarios.add(new Admin("Juan", "Lema", "admin@mail.com", "1234", "Uruguay"));
-        usuarios.add(new Tester("Ana", "Perez", "tester@mail.com", "1234", "Uruguay", "Junior"));
+        usuarios.add(new Admin("Juan", "Lema", "admin@mail.com", "admin123", "Uruguay"));
+        usuarios.add(new Tester("Ana", "Perez", "tester@mail.com", "tester123", "Uruguay", "Junior"));
     }
 
     public boolean existeUsuario(String email) {
         for (int i = 0; i < usuarios.size(); i++) {
-            if (usuarios.get(i).getEmail().equals(email)) {
+            if (usuarios.get(i).getEmail().equalsIgnoreCase(email)) {
                 return true;
             }
         }
@@ -26,22 +38,22 @@ public class SistemaUsuarios {
         return false;
     }
 
-    public boolean registrarUsuario(Usuario usuario) {
+    public void registrarUsuario(Usuario usuario)
+            throws EmailDuplicadoException, DatosInvalidosException {
+        ValidadorDatos.validarUsuario(usuario);
+
         if (existeUsuario(usuario.getEmail())) {
-            System.out.println("Ya existe un usuario con ese email.");
-            return false;
+            throw new EmailDuplicadoException("Ya existe un usuario con el email ingresado.");
         }
 
         usuarios.add(usuario);
-        System.out.println("Usuario registrado correctamente.");
-        return true;
     }
 
     public Usuario validarCredenciales(String email, String contrasena) {
         for (int i = 0; i < usuarios.size(); i++) {
             Usuario usuario = usuarios.get(i);
 
-            if (usuario.getEmail().equals(email)
+            if (usuario.getEmail().equalsIgnoreCase(email)
                     && usuario.validarContrasena(contrasena)
                     && usuario.getActivo()) {
                 return usuario;
@@ -51,29 +63,39 @@ public class SistemaUsuarios {
         return null;
     }
 
-    public Usuario login(String email, String contrasena) {
-        return validarCredenciales(email, contrasena);
-    }
+    public Usuario login(String email, String contrasena)
+            throws DatosInvalidosException, UsuarioNoEncontradoException {
+        ValidadorDatos.validarEmail(email);
+        ValidadorDatos.validarCampoObligatorio(contrasena, "contrasena");
 
-    public boolean reiniciarContrasena(String email, String nuevaContrasena) {
         Usuario usuario = buscarUsuario(email);
 
-        if (usuario != null) {
-            usuario.setContrasena(nuevaContrasena);
-            return true;
+        if (!usuario.validarContrasena(contrasena) || !usuario.getActivo()) {
+            throw new DatosInvalidosException("Las credenciales ingresadas son incorrectas.");
         }
 
-        return false;
+        return usuario;
     }
 
-    public Usuario buscarUsuario(String email) {
+    public void reiniciarContrasena(String email, String nuevaContrasena)
+            throws DatosInvalidosException, UsuarioNoEncontradoException {
+        ValidadorDatos.validarEmail(email);
+        ValidadorDatos.validarContrasena(nuevaContrasena);
+        Usuario usuario = buscarUsuario(email);
+        usuario.setContrasena(nuevaContrasena);
+    }
+
+    public Usuario buscarUsuario(String email)
+            throws DatosInvalidosException, UsuarioNoEncontradoException {
+        ValidadorDatos.validarEmail(email);
+
         for (int i = 0; i < usuarios.size(); i++) {
-            if (usuarios.get(i).getEmail().equals(email)) {
+            if (usuarios.get(i).getEmail().equalsIgnoreCase(email)) {
                 return usuarios.get(i);
             }
         }
 
-        return null;
+        throw new UsuarioNoEncontradoException("No se encontro un usuario con ese email.");
     }
 
     public void listarUsuarios() {

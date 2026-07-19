@@ -1,13 +1,16 @@
 package principal;
 
 import java.util.Scanner;
+import principal.excepciones.DatosInvalidosException;
+import principal.excepciones.EmailDuplicadoException;
+import principal.excepciones.UsuarioNoEncontradoException;
 
 public class Main {
 
     public static void main(String[] args) {
 
         Scanner teclado = new Scanner(System.in);
-        SistemaUsuarios sistema = new SistemaUsuarios();
+        SistemaUsuarios sistema = SistemaUsuarios.getInstancia();
 
         int opcion = 0;
 
@@ -21,8 +24,7 @@ public class Main {
             System.out.println("6. Salir");
             System.out.print("Ingrese una opcion: ");
 
-            opcion = teclado.nextInt();
-            teclado.nextLine();
+            opcion = leerOpcion(teclado);
 
             if (opcion == 1) {
                 System.out.print("Email: ");
@@ -31,15 +33,14 @@ public class Main {
                 System.out.print("Contrasena: ");
                 String contrasena = teclado.nextLine();
 
-                Usuario usuarioLogueado = sistema.login(email, contrasena);
-
-                if (usuarioLogueado != null) {
+                try {
+                    Usuario usuarioLogueado = sistema.login(email, contrasena);
                     System.out.println("Inicio de sesion correcto.");
                     System.out.println("Bienvenido/a " + usuarioLogueado.getNombre());
                     usuarioLogueado.mostrarMensajeBienvenida();
                     menuUsuario(teclado, sistema, usuarioLogueado);
-                } else {
-                    System.out.println("Credenciales incorrectas.");
+                } catch (DatosInvalidosException | UsuarioNoEncontradoException excepcion) {
+                    System.out.println("Error: " + excepcion.getMessage());
                 }
 
             } else if (opcion == 2) {
@@ -58,8 +59,13 @@ public class Main {
                 System.out.print("Pais: ");
                 String pais = teclado.nextLine();
 
-                Admin admin = new Admin(nombre, apellido, email, contrasena, pais);
-                sistema.registrarUsuario(admin);
+                try {
+                    Admin admin = new Admin(nombre, apellido, email, contrasena, pais);
+                    sistema.registrarUsuario(admin);
+                    System.out.println("Administrador registrado correctamente.");
+                } catch (DatosInvalidosException | EmailDuplicadoException excepcion) {
+                    System.out.println("Error: " + excepcion.getMessage());
+                }
 
             } else if (opcion == 3) {
                 System.out.print("Email: ");
@@ -68,12 +74,11 @@ public class Main {
                 System.out.print("Nueva contrasena: ");
                 String nuevaContrasena = teclado.nextLine();
 
-                boolean resultado = sistema.reiniciarContrasena(email, nuevaContrasena);
-
-                if (resultado) {
+                try {
+                    sistema.reiniciarContrasena(email, nuevaContrasena);
                     System.out.println("Contrasena actualizada correctamente.");
-                } else {
-                    System.out.println("No se encontro un usuario con ese email.");
+                } catch (DatosInvalidosException | UsuarioNoEncontradoException excepcion) {
+                    System.out.println("Error: " + excepcion.getMessage());
                 }
 
             } else if (opcion == 4) {
@@ -109,8 +114,7 @@ public class Main {
             System.out.println("5. Cerrar sesion");
             System.out.print("Ingrese una opcion: ");
 
-            opcion = teclado.nextInt();
-            teclado.nextLine();
+            opcion = leerOpcion(teclado);
 
             if (opcion == 1) {
                 System.out.print("Nombre: ");
@@ -131,19 +135,29 @@ public class Main {
                 System.out.println("3. Lider");
                 System.out.print("Opcion: ");
 
-                int opcionNivel = teclado.nextInt();
-                teclado.nextLine();
+                int opcionNivel = leerOpcion(teclado);
 
-                String nivel = "Junior";
+                String nivel = null;
 
-                if (opcionNivel == 2) {
+                if (opcionNivel == 1) {
+                    nivel = "Junior";
+                } else if (opcionNivel == 2) {
                     nivel = "Senior";
                 } else if (opcionNivel == 3) {
                     nivel = "Lider";
+                } else {
+                    System.out.println("Error: el nivel seleccionado no existe.");
+                    continue;
                 }
 
-                Tester tester = new Tester(nombre, apellido, email, "1234", pais, nivel);
-                sistema.registrarUsuario(tester);
+                try {
+                    Tester tester = new Tester(nombre, apellido, email, "Tester123", pais, nivel);
+                    sistema.registrarUsuario(tester);
+                    System.out.println("Tester registrado correctamente.");
+                    System.out.println("Contrasena inicial: Tester123");
+                } catch (DatosInvalidosException | EmailDuplicadoException excepcion) {
+                    System.out.println("Error: " + excepcion.getMessage());
+                }
 
             } else if (opcion == 2) {
                 sistema.listarUsuarios();
@@ -170,13 +184,23 @@ public class Main {
         System.out.print("Ingrese email a buscar: ");
         String email = teclado.nextLine();
 
-        Usuario usuarioEncontrado = sistema.buscarUsuario(email);
-
-        if (usuarioEncontrado != null) {
+        try {
+            Usuario usuarioEncontrado = sistema.buscarUsuario(email);
             System.out.println("Usuario encontrado:");
             usuarioEncontrado.mostrarDatos();
-        } else {
-            System.out.println("No se encontro un usuario con ese email.");
+        } catch (DatosInvalidosException | UsuarioNoEncontradoException excepcion) {
+            System.out.println("Error: " + excepcion.getMessage());
+        }
+    }
+
+    public static int leerOpcion(Scanner teclado) {
+        String valorIngresado = teclado.nextLine();
+
+        try {
+            return Integer.parseInt(valorIngresado);
+        } catch (NumberFormatException excepcion) {
+            System.out.println("Error: debe ingresar una opcion numerica.");
+            return -1;
         }
     }
 }
